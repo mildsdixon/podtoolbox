@@ -6,7 +6,6 @@ import {
   Check,
   CreditCard,
   Database,
-  LayoutDashboard,
   Lock,
   LogOut,
   Mail,
@@ -148,27 +147,26 @@ function Header({ view, setView }) {
         <button className={view === 'site' ? 'navActive' : ''} type="button" onClick={() => setView('site')}>Website</button>
         <a href="#features" onClick={() => setView('site')}>Features</a>
         <a href="#pricing" onClick={() => setView('site')}>Pricing</a>
-        <button className={view === 'admin' ? 'navActive' : ''} type="button" onClick={() => setView('admin')}>Admin</button>
       </nav>
-      <button className="headerSignIn" type="button" onClick={() => setView(view === 'admin' ? 'site' : 'admin')}>
-        <LayoutDashboard size={20} />
-        <span>{view === 'admin' ? 'Website' : 'Admin'}</span>
-      </button>
+      <a className="headerSignIn" href="#membership">
+        <ArrowRight size={20} />
+        <span>Membership</span>
+      </a>
     </header>
   );
 }
 
-function AuthPanel({ selectedPlan, setSelectedPlan, setView }) {
+function AuthPanel({ selectedPlan, setSelectedPlan }) {
   return (
     <aside className="authStack" id="signin" aria-label="Sign in and membership status">
       <div className="signInPanel">
-        <h2>Admin backend</h2>
-        <p>Sign in with Supabase Auth to manage members, episodes, plans, and payments.</p>
-        <button className="primaryWide" type="button" onClick={() => setView('admin')}>
-          <span>Open admin</span>
+        <h2>Member access</h2>
+        <p>Membership tools are connected to a secure Supabase database behind the scenes.</p>
+        <a className="primaryWide" href="#pricing">
+          <span>Start membership</span>
           <ArrowRight size={19} />
-        </button>
-        <p className="panelFoot">First owner: <strong>mdixon@okanemedia.net</strong></p>
+        </a>
+        <p className="panelFoot">Manage plan, renewal, and access in one place.</p>
       </div>
 
       <div className="statusPanel" id="membership">
@@ -330,7 +328,7 @@ function Pricing({ selectedPlan, setSelectedPlan }) {
   );
 }
 
-function WebsiteView({ setView }) {
+function WebsiteView() {
   const [selectedPlan, setSelectedPlan] = useState('Studio');
 
   return (
@@ -346,11 +344,11 @@ function WebsiteView({ setView }) {
           </div>
           <div className="heroActions">
             <a className="startButton" href="#pricing"><Wrench size={21} /> Start membership</a>
-            <button className="secondaryButton" type="button" onClick={() => setView('admin')}><ArrowRight size={21} /> Admin sign in</button>
+            <a className="secondaryButton" href="#membership"><ArrowRight size={21} /> View membership</a>
           </div>
           <p className="trust"><ShieldCheck size={16} /> Secure. Built for creators. Trusted by podcasters.</p>
         </div>
-        <AuthPanel selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} setView={setView} />
+        <AuthPanel selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} />
       </section>
       <DashboardPreview selectedPlan={selectedPlan} />
       <Pricing selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} />
@@ -861,7 +859,7 @@ function App() {
   return (
     <main id="top">
       <Header view={view} setView={setView} />
-      {view === 'admin' ? <AdminBackend /> : <WebsiteView setView={setView} />}
+      {view === 'admin' ? <AdminBackend /> : <WebsiteView />}
     </main>
   );
 }
