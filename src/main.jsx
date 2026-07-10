@@ -217,6 +217,7 @@ function DashboardPreview({ selectedPlan }) {
           ['Dashboard', Database],
           ['Members', Users],
           ['Episodes', Mic],
+          ['Tools', Wrench],
           ['Memberships', ShieldCheck],
           ['Payments', CreditCard],
           ['Settings', Settings],
