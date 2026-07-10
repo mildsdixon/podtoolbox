@@ -6,6 +6,12 @@ Current DNS check:
 - `www.podtoolbox.net` currently follows `podtoolbox.net`.
 - Nameservers are `ns43.domaincontrol.com` and `ns44.domaincontrol.com`, so DNS is managed inside GoDaddy.
 
+DigitalOcean app created:
+
+- App name: `podtoolbox`
+- App ID: `db2d0337-c5d0-4f73-bb08-8220d4c20344`
+- GitHub source: `https://github.com/mildsdixon/podtoolbox`
+
 ## Disconnect GoDaddy Website Builder
 
 1. Sign in to GoDaddy.
