@@ -1,0 +1,18 @@
+name: podtoolbox
+region: nyc
+static_sites:
+  - name: podtoolbox-web
+    github:
+      repo: mildsdixon/podtoolbox
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: npm run build
+    output_dir: dist
+    routes:
+      - path: /
+domains:
+  - domain: podtoolbox.net
+    type: PRIMARY
+  - domain: www.podtoolbox.net
+    type: ALIAS
