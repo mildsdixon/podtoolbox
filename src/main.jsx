@@ -661,7 +661,7 @@ function AdminBackend() {
 
   return (
     <section className="adminShell">
-      <AdminLogin session={session} setMessage={setMessage} />
+      {hasSupabaseConfig && <AdminLogin session={session} setMessage={setMessage} />}
 
       {(session || !hasSupabaseConfig) && (
         <>
