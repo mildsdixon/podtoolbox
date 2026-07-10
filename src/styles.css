@@ -162,8 +162,20 @@ button {
   font-weight: 560;
 }
 
-.mainNav a {
+.mainNav a,
+.mainNav button {
   padding: 10px 0;
+}
+
+.mainNav button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: inherit;
+}
+
+.mainNav .navActive {
+  color: var(--teal);
 }
 
 .headerSignIn,
@@ -884,6 +896,252 @@ td:first-child {
   font-size: 0.9rem;
 }
 
+.adminShell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 48px 32px 72px;
+}
+
+.adminLogin {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 42px;
+  align-items: start;
+  min-height: 520px;
+  padding-top: 42px;
+}
+
+.adminLogin h1,
+.adminTopbar h1 {
+  margin: 0;
+  font-size: clamp(2.6rem, 6vw, 5.5rem);
+  line-height: 0.98;
+  font-weight: 900;
+}
+
+.adminLogin p,
+.adminTopbar p {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 1.06rem;
+  line-height: 1.5;
+}
+
+.adminAuthCard,
+.adminForm,
+.adminTableCard,
+.adminMetric,
+.adminNotice {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--soft-shadow);
+}
+
+.adminAuthCard,
+.adminForm {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.adminAuthCard label {
+  display: grid;
+  gap: 8px;
+  color: #131820;
+  font-size: 0.9rem;
+  font-weight: 720;
+}
+
+.secondaryWide {
+  min-height: 46px;
+  border: 1px solid #98a4ad;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111922;
+  font-weight: 780;
+}
+
+.adminTopbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.adminTopbar h1 {
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+}
+
+.adminTopbarActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+
+.adminTopbarActions button,
+.rowActions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #bdc8ce;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #18212b;
+  font-size: 0.9rem;
+  font-weight: 760;
+}
+
+.adminNotice {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  color: #075f56;
+  background: #e8f8f2;
+  font-weight: 720;
+}
+
+.adminNotice.warning {
+  color: #8d3b1f;
+  background: #fff1e8;
+  border-color: #ffd3bd;
+}
+
+.adminMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.adminMetric {
+  padding: 18px;
+}
+
+.adminMetric svg {
+  color: var(--teal);
+}
+
+.adminMetric span {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 720;
+}
+
+.adminMetric strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.adminTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.adminTabs button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 840;
+  text-transform: capitalize;
+}
+
+.adminTabs button.active {
+  border-color: var(--teal);
+  color: var(--teal-dark);
+}
+
+.adminGrid {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.adminForm h2,
+.adminTableCard h2 {
+  margin: 0 0 6px;
+  font-size: 1.28rem;
+}
+
+.adminField {
+  display: grid;
+  gap: 7px;
+  color: #202a35;
+  font-size: 0.86rem;
+  font-weight: 780;
+}
+
+.adminField input,
+.adminField select,
+.adminField textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cdd7dd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17212b;
+  padding: 9px 11px;
+  outline: 0;
+}
+
+.adminField textarea {
+  resize: vertical;
+}
+
+.twoFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.adminPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #079189, #00766f);
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.adminTableCard {
+  overflow: auto;
+  padding: 18px;
+}
+
+.adminTableCard table {
+  min-width: 720px;
+}
+
+.rowActions {
+  display: flex;
+  gap: 7px;
+}
+
+.rowActions button {
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
 @media (max-width: 940px) {
   .siteHeader {
     grid-template-columns: 1fr auto;
@@ -910,8 +1168,19 @@ td:first-child {
 
   .featureStrip,
   .metricGrid,
-  .pricingGrid {
+  .pricingGrid,
+  .adminMetrics {
     grid-template-columns: 1fr;
+  }
+
+  .adminLogin,
+  .adminGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .adminTopbar {
+    align-items: start;
+    flex-direction: column;
   }
 
   .dashboardPreview {

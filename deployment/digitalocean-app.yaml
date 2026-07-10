@@ -9,6 +9,13 @@ static_sites:
     source_dir: /
     build_command: npm run build
     output_dir: dist
+    envs:
+      - key: VITE_SUPABASE_URL
+        value: https://rcvuuzrjrgzdsfnvfdzz.supabase.co
+        scope: BUILD_TIME
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_Ne16N_lU7j-fv-XkDIlBJQ_ppE01Sbp
+        scope: BUILD_TIME
     routes:
       - path: /
 domains:
