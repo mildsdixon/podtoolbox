@@ -1,0 +1,325 @@
+import { createReadStream, createWriteStream } from 'node:fs';
+import { mkdir, rm, stat } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { extname, join, resolve } from 'node:path';
+import { pipeline } from 'node:stream/promises';
+import { spawn } from 'node:child_process';
+import Busboy from 'busboy';
+import ffmpegPath from 'ffmpeg-static';
+import { PODVERTER_FORMATS, getPodVerterFormat } from '../src/podVerter.js';
+
+const PORT = Number(process.env.PORT || process.env.PODCLIPZ_MEDIA_PORT || 8788);
+const HOST = process.env.HOST || '0.0.0.0';
+const ROOT_DIR = resolve(process.cwd(), '.podclipz-media');
+const UPLOAD_DIR = join(ROOT_DIR, 'uploads');
+const EXPORT_DIR = join(ROOT_DIR, 'exports');
+const CONVERSION_DIR = join(ROOT_DIR, 'conversions');
+const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
+
+function sendJson(response, statusCode, payload) {
+  response.writeHead(statusCode, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'content-type',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Content-Type': 'application/json',
+  });
+  response.end(JSON.stringify(payload));
+}
+
+function publicUrl(request, path) {
+  const proto = request.headers['x-forwarded-proto'] || 'http';
+  const host = request.headers['x-forwarded-host'] || request.headers.host || `127.0.0.1:${PORT}`;
+  return `${proto}://${host}${path}`;
+}
+
+function cleanFileName(value) {
+  return String(value || 'podclipz-video')
+    .replace(/\.[a-z0-9]{2,5}$/i, '')
+    .replace(/[^a-z0-9_-]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'podclipz-video';
+}
+
+function parseTimestamp(value) {
+  if (typeof value === 'number') return Math.max(0, value);
+  const parts = String(value || '').split(':').map(Number);
+  if (!parts.length || parts.some(Number.isNaN)) return 0;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return Math.max(0, Number(value) || 0);
+}
+
+function parseMultipart(request) {
+  return new Promise((resolvePromise, reject) => {
+    const fields = {};
+    let upload = null;
+    let uploadBytes = 0;
+    const busboy = Busboy({ headers: request.headers, limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
+
+    busboy.on('field', (name, value) => {
+      fields[name] = value;
+    });
+
+    busboy.on('file', async (name, file, info) => {
+      if (!['video', 'media'].includes(name)) {
+        file.resume();
+        return;
+      }
+
+      const originalName = cleanFileName(info.filename);
+      const extension = extname(info.filename || '').slice(0, 10) || '.mp4';
+      const uploadPath = join(UPLOAD_DIR, `${Date.now()}-${originalName}${extension}`);
+      upload = { path: uploadPath, filename: info.filename, mimeType: info.mimeType };
+
+      file.on('data', (chunk) => {
+        uploadBytes += chunk.length;
+      });
+
+      try {
+        await pipeline(file, createWriteStream(uploadPath));
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    busboy.on('error', reject);
+    busboy.on('finish', () => {
+      if (!upload) {
+        reject(new Error('Upload a source audio or video file.'));
+        return;
+      }
+      resolvePromise({ fields, upload, uploadBytes });
+    });
+
+    request.pipe(busboy);
+  });
+}
+
+async function handleConversion(request, response) {
+  let uploadPath = '';
+
+  try {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+    await mkdir(CONVERSION_DIR, { recursive: true });
+
+    const { fields, upload } = await parseMultipart(request);
+    uploadPath = upload.path;
+    const format = getPodVerterFormat(fields.format);
+
+    if (!format) {
+      throw new Error('Choose MP3, WAV, M4A, MP4, or WebM as the output format.');
+    }
+
+    if (!/^(audio|video)\//.test(upload.mimeType || '')) {
+      throw new Error('PODVerter accepts audio and video files only.');
+    }
+
+    if (format.kind === 'video' && !String(upload.mimeType).startsWith('video/')) {
+      throw new Error('Choose a video file when converting to MP4 or WebM.');
+    }
+
+    const sourceName = cleanFileName(upload.filename || 'podverter-media');
+    const fileName = `${Date.now()}-${sourceName}.${format.value}`;
+    const outputPath = join(CONVERSION_DIR, fileName);
+
+    await runFfmpeg([
+      '-hide_banner',
+      '-y',
+      '-i',
+      upload.path,
+      ...format.ffmpegArgs,
+      outputPath,
+    ]);
+
+    const converted = await stat(outputPath);
+    sendJson(response, 200, {
+      status: 'ready',
+      sourceName: upload.filename,
+      fileName,
+      sizeBytes: converted.size,
+      format: format.value,
+      formatLabel: format.label,
+      downloadUrl: publicUrl(request, `/conversions/${encodeURIComponent(fileName)}`),
+    });
+  } catch (error) {
+    sendJson(response, 500, { error: error instanceof Error ? error.message : 'PODVerter could not convert this file.' });
+  } finally {
+    if (uploadPath) await rm(uploadPath, { force: true });
+  }
+}
+
+function runFfmpeg(args) {
+  return new Promise((resolvePromise, reject) => {
+    const child = spawn(ffmpegPath, args);
+    let stderr = '';
+
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolvePromise();
+        return;
+      }
+      reject(new Error(stderr.split('\n').slice(-8).join('\n') || `ffmpeg exited with code ${code}`));
+    });
+  });
+}
+
+async function handleExport(request, response) {
+  try {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+    await mkdir(EXPORT_DIR, { recursive: true });
+
+    const { fields, upload } = await parseMultipart(request);
+    const startSeconds = parseTimestamp(fields.startSeconds || fields.start);
+    const requestedDuration = parseTimestamp(fields.durationSeconds || fields.duration);
+    const durationSeconds = Math.min(90, Math.max(5, requestedDuration || 30));
+    const title = String(fields.title || 'PodClipz Export').slice(0, 120);
+    const clipId = cleanFileName(fields.clipId || title);
+    const exportName = `${Date.now()}-${clipId}.mp4`;
+    const exportPath = join(EXPORT_DIR, exportName);
+
+    const videoFilter = [
+      'scale=1080:1920:force_original_aspect_ratio=increase',
+      'crop=1080:1920',
+      'setsar=1',
+    ].join(',');
+
+    await runFfmpeg([
+      '-hide_banner',
+      '-y',
+      '-ss',
+      String(startSeconds),
+      '-i',
+      upload.path,
+      '-t',
+      String(durationSeconds),
+      '-vf',
+      videoFilter,
+      '-c:v',
+      'libx264',
+      '-preset',
+      'veryfast',
+      '-crf',
+      '23',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-movflags',
+      '+faststart',
+      exportPath,
+    ]);
+
+    await rm(upload.path, { force: true });
+
+    const exported = await stat(exportPath);
+    sendJson(response, 200, {
+      status: 'ready',
+      title,
+      fileName: exportName,
+      sizeBytes: exported.size,
+      downloadUrl: publicUrl(request, `/exports/${encodeURIComponent(exportName)}`),
+      durationSeconds,
+      startSeconds,
+      format: 'MP4 9:16 vertical',
+    });
+  } catch (error) {
+    sendJson(response, 500, { error: error instanceof Error ? error.message : 'Could not export clip.' });
+  }
+}
+
+async function serveExport(request, response) {
+  const fileName = decodeURIComponent(new URL(request.url, `http://127.0.0.1:${PORT}`).pathname.replace('/exports/', ''));
+  const filePath = join(EXPORT_DIR, cleanFileName(fileName.replace(/\.mp4$/i, '')) + '.mp4');
+
+  try {
+    const fileInfo = await stat(filePath);
+    response.writeHead(200, {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': fileInfo.size,
+      'Content-Type': 'video/mp4',
+    });
+    createReadStream(filePath).pipe(response);
+  } catch {
+    sendJson(response, 404, { error: 'Export file not found.' });
+  }
+}
+
+async function serveConversion(request, response) {
+  const requestedName = decodeURIComponent(new URL(request.url, `http://127.0.0.1:${PORT}`).pathname.replace('/conversions/', ''));
+  const extension = extname(requestedName).slice(1).toLowerCase();
+  const format = getPodVerterFormat(extension);
+
+  if (!format) {
+    sendJson(response, 404, { error: 'Converted file not found.' });
+    return;
+  }
+
+  const fileName = `${cleanFileName(requestedName)}.${format.value}`;
+  const filePath = join(CONVERSION_DIR, fileName);
+
+  try {
+    const fileInfo = await stat(filePath);
+    response.writeHead(200, {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': fileInfo.size,
+      'Content-Type': format.mimeType,
+    });
+    createReadStream(filePath).pipe(response);
+  } catch {
+    sendJson(response, 404, { error: 'Converted file not found.' });
+  }
+}
+
+await mkdir(UPLOAD_DIR, { recursive: true });
+await mkdir(EXPORT_DIR, { recursive: true });
+await mkdir(CONVERSION_DIR, { recursive: true });
+
+createServer(async (request, response) => {
+  if (request.method === 'OPTIONS') {
+    sendJson(response, 204, {});
+    return;
+  }
+
+  const url = new URL(request.url, `http://127.0.0.1:${PORT}`);
+
+  if (request.method === 'GET' && url.pathname === '/health') {
+    sendJson(response, 200, {
+      ok: true,
+      service: 'pod-toolbox-media',
+      ffmpeg: Boolean(ffmpegPath),
+      podVerterFormats: PODVERTER_FORMATS.map((format) => format.value),
+    });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/podverter/convert') {
+    await handleConversion(request, response);
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/podclipz/export') {
+    await handleExport(request, response);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/exports/')) {
+    await serveExport(request, response);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/conversions/')) {
+    await serveConversion(request, response);
+    return;
+  }
+
+  sendJson(response, 404, { error: 'Pod Toolbox media endpoint not found.' });
+}).listen(PORT, HOST, () => {
+  console.log(`Pod Toolbox media server ready at http://${HOST}:${PORT}`);
+});

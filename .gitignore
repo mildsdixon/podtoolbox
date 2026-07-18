@@ -1,5 +1,9 @@
 node_modules/
 dist/
 deployment/static-build/
+data/
+.playwright-mcp/
+.podclipz-media/
+.env.local
 .DS_Store
 npm-debug.log*
