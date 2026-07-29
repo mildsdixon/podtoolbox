@@ -837,6 +837,14 @@ function mediaApiUrl(path) {
   return `${isLocal ? 'http://127.0.0.1:8788' : ''}${path}`;
 }
 
+const podVerterMediaExtensions = ['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'mp4', 'mov', 'm4v', 'webm', 'mkv'];
+
+function isPodVerterMediaFile(file) {
+  const mimeType = String(file?.type || '');
+  const extension = String(file?.name || '').split('.').pop()?.toLowerCase();
+  return /^(audio|video)\//.test(mimeType) || podVerterMediaExtensions.includes(extension);
+}
+
 function ClipAnalyzerTool({ transcript, setTranscript, result, setResult }) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [urlNotice, setUrlNotice] = useState('');
@@ -2308,6 +2316,7 @@ function PodVerterTool() {
   const [sourceFile, setSourceFile] = useState(null);
   const [outputFormat, setOutputFormat] = useState('mp3');
   const [busy, setBusy] = useState(false);
+  const [downloadBusy, setDownloadBusy] = useState(false);
   const [notice, setNotice] = useState('Choose a file and output format to begin.');
   const [noticeType, setNoticeType] = useState('info');
   const [conversion, setConversion] = useState(null);
@@ -2324,7 +2333,7 @@ function PodVerterTool() {
       return;
     }
 
-    if (!/^(audio|video)\//.test(file.type)) {
+    if (!isPodVerterMediaFile(file)) {
       setSourceFile(null);
       setNotice('PODVerter accepts audio and video files only.');
       setNoticeType('error');
@@ -2376,6 +2385,41 @@ function PodVerterTool() {
       setNoticeType('error');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function downloadConversion() {
+    if (!conversion?.downloadUrl) return;
+
+    setDownloadBusy(true);
+    setNotice(`Preparing ${conversion.fileName} for download...`);
+    setNoticeType('info');
+
+    try {
+      const response = await fetch(conversion.downloadUrl);
+      const contentType = response.headers.get('content-type') || '';
+
+      if (!response.ok || contentType.includes('application/json')) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'The converted file is no longer available. Convert it again, then download right away.');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = conversion.fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setNotice(`${conversion.fileName} downloaded.`);
+      setNoticeType('success');
+    } catch (error) {
+      setNotice(error.message || 'PODVerter could not download the converted file. Convert it again and retry.');
+      setNoticeType('error');
+    } finally {
+      setDownloadBusy(false);
     }
   }
 
@@ -2431,9 +2475,9 @@ function PodVerterTool() {
               <span>Conversion complete</span>
               <h2>{conversion.fileName}</h2>
               <p>{conversion.formatLabel} · {formatPodVerterBytes(conversion.sizeBytes)}</p>
-              <a className="downloadClipLink" href={conversion.downloadUrl} download>
-                <Download size={19} /> Download {conversion.format.toUpperCase()}
-              </a>
+              <button className="downloadClipLink" type="button" onClick={downloadConversion} disabled={downloadBusy}>
+                <Download size={19} /> {downloadBusy ? 'Preparing...' : `Download ${conversion.format.toUpperCase()}`}
+              </button>
             </>
           ) : (
             <>

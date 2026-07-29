@@ -2309,6 +2309,14 @@ td:first-child {
   border: 1px solid #0f867d;
   background: #effaf6;
   color: #075f56;
+  cursor: pointer;
+}
+
+.downloadClipLink:disabled {
+  border-color: #c6d1d2;
+  background: #eef3f3;
+  color: #526064;
+  cursor: wait;
 }
 
 .clipExportCard {
