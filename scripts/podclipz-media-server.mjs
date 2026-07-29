@@ -15,6 +15,8 @@ const UPLOAD_DIR = join(ROOT_DIR, 'uploads');
 const EXPORT_DIR = join(ROOT_DIR, 'exports');
 const CONVERSION_DIR = join(ROOT_DIR, 'conversions');
 const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
+const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.webm']);
+const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.m4v', '.webm', '.mkv']);
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -47,6 +49,15 @@ function parseTimestamp(value) {
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   return Math.max(0, Number(value) || 0);
+}
+
+function uploadMediaKind(upload) {
+  const mimeType = String(upload.mimeType || '');
+  const extension = extname(upload.filename || '').toLowerCase();
+
+  if (mimeType.startsWith('video/') || VIDEO_EXTENSIONS.has(extension)) return 'video';
+  if (mimeType.startsWith('audio/') || AUDIO_EXTENSIONS.has(extension)) return 'audio';
+  return '';
 }
 
 function parseMultipart(request) {
@@ -110,11 +121,12 @@ async function handleConversion(request, response) {
       throw new Error('Choose MP3, WAV, M4A, MP4, or WebM as the output format.');
     }
 
-    if (!/^(audio|video)\//.test(upload.mimeType || '')) {
+    const mediaKind = uploadMediaKind(upload);
+    if (!mediaKind) {
       throw new Error('PODVerter accepts audio and video files only.');
     }
 
-    if (format.kind === 'video' && !String(upload.mimeType).startsWith('video/')) {
+    if (format.kind === 'video' && mediaKind !== 'video') {
       throw new Error('Choose a video file when converting to MP4 or WebM.');
     }
 
@@ -299,12 +311,12 @@ createServer(async (request, response) => {
     return;
   }
 
-  if (request.method === 'POST' && url.pathname === '/api/podverter/convert') {
+  if (request.method === 'POST' && ['/api/podverter/convert', '/podverter/convert'].includes(url.pathname)) {
     await handleConversion(request, response);
     return;
   }
 
-  if (request.method === 'POST' && url.pathname === '/api/podclipz/export') {
+  if (request.method === 'POST' && ['/api/podclipz/export', '/podclipz/export'].includes(url.pathname)) {
     await handleExport(request, response);
     return;
   }
