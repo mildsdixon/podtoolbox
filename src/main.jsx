@@ -621,7 +621,9 @@ function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, open
       <section className="hero">
         <div className="heroCopy">
           <h1 className="heroLogoHeading">
-            <img src={podToolboxLogo} alt="Pod Toolbox" />
+            <span className="heroLogoFrame">
+              <img src={podToolboxLogo} alt="Pod Toolbox" />
+            </span>
           </h1>
           <p className="lead">Organize your podcast production, membership, and monetization.</p>
           <div className="featureStrip" id="features">
