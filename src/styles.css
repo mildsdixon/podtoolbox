@@ -706,10 +706,10 @@ td:first-child {
 
 .episodeRow {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) auto auto;
+  grid-template-columns: 96px minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
-  min-height: 52px;
+  min-height: 64px;
   border-top: 1px solid #edf1f2;
   font-size: 0.82rem;
 }
@@ -718,9 +718,9 @@ td:first-child {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 76px;
-  min-height: 34px;
+  gap: 7px;
+  width: 90px;
+  min-height: 44px;
   border: 0;
   border-radius: 8px;
   background: #101820;
@@ -728,6 +728,25 @@ td:first-child {
   font-size: 0.78rem;
   font-weight: 850;
   cursor: pointer;
+}
+
+.episodePlayLogo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 32px;
+  flex: 0 0 38px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #000000;
+}
+
+.episodePlayLogo img {
+  display: block;
+  width: 54px;
+  max-width: none;
+  height: auto;
 }
 
 .episodeRow button:hover,
@@ -3341,7 +3360,7 @@ td:first-child {
   }
 
   .episodeRow {
-    grid-template-columns: 76px minmax(150px, 1fr) auto;
+    grid-template-columns: 90px minmax(150px, 1fr) auto;
   }
 
   .episodeRow time {

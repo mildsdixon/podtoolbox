@@ -356,7 +356,9 @@ function DashboardPreview({ selectedPlan, openAdmin }) {
               {fallbackEpisodes.map((episode) => (
                 <div className="episodeRow" key={episode.id}>
                   <button className="episodePlayButton" type="button" aria-label={`Play ${episode.title}`} onClick={() => openAdmin('episodes')}>
-                    <Play size={14} />
+                    <span className="episodePlayLogo" aria-hidden="true">
+                      <img src={podToolboxLogo} alt="" />
+                    </span>
                     <span>Play</span>
                   </button>
                   <span>EP {episode.episode_number}: {episode.title}</span>
