@@ -355,7 +355,10 @@ function DashboardPreview({ selectedPlan, openAdmin }) {
             <div className="episodeList">
               {fallbackEpisodes.map((episode) => (
                 <div className="episodeRow" key={episode.id}>
-                  <button type="button" aria-label={`Manage ${episode.title}`} onClick={() => openAdmin('episodes')}><Pencil size={13} /></button>
+                  <button className="episodePlayButton" type="button" aria-label={`Play ${episode.title}`} onClick={() => openAdmin('episodes')}>
+                    <Play size={14} />
+                    <span>Play</span>
+                  </button>
                   <span>EP {episode.episode_number}: {episode.title}</span>
                   <strong className={`episode${episode.status[0].toUpperCase()}${episode.status.slice(1)}`}>{episode.status}</strong>
                   <time>{displayDate(episode.publish_date).replace(', 2026', '')}</time>

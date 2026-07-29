@@ -706,23 +706,40 @@ td:first-child {
 
 .episodeRow {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto auto;
-  gap: 10px;
+  grid-template-columns: 82px minmax(0, 1fr) auto auto;
+  gap: 12px;
   align-items: center;
-  min-height: 45px;
+  min-height: 52px;
   border-top: 1px solid #edf1f2;
   font-size: 0.82rem;
 }
 
 .episodeRow button {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #cfd8dd;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #43515f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 76px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: #101820;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.episodeRow button:hover,
+.episodeRow button:focus-visible {
+  background: var(--teal-dark);
+}
+
+.episodeRow button span {
+  overflow: visible;
+  color: inherit;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .episodeRow span {
@@ -3324,7 +3341,7 @@ td:first-child {
   }
 
   .episodeRow {
-    grid-template-columns: 26px minmax(150px, 1fr) auto;
+    grid-template-columns: 76px minmax(150px, 1fr) auto;
   }
 
   .episodeRow time {
