@@ -3434,3 +3434,513 @@ td:first-child {
     grid-template-columns: 76px minmax(0, 1fr) 30px;
   }
 }
+
+/* PodPost */
+.podPostShell {
+  width: min(1380px, calc(100% - 48px));
+  margin: 42px auto 72px;
+}
+
+.podPostIntro {
+  display: grid;
+  grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) auto;
+  gap: 34px;
+  align-items: center;
+  padding: 30px 34px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--soft-shadow);
+}
+
+.podPostIntro img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.podPostIntro h1 {
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.podPostIntro p {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.podPostCloudButton,
+.podPostPrimary,
+.podPostTextButton,
+.podPostCaptionCard button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 780;
+}
+
+.podPostCloudButton {
+  min-height: 48px;
+  padding: 0 18px;
+  color: #111827;
+  background: #fff8e2;
+  border: 1px solid #f0c34c;
+  border-radius: 12px;
+}
+
+.podPostCloudButton.connected {
+  color: #00635f;
+  background: var(--mint);
+  border-color: #8ad4bd;
+}
+
+.podPostWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.podPostBrief,
+.podPostOutput,
+.podPostScheduler,
+.podPostQueue {
+  min-width: 0;
+  padding: 26px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(15, 36, 43, 0.06);
+}
+
+.podPostPanelHeading {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.podPostPanelHeading > span {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: #111827;
+  background: #ffc431;
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.podPostPanelHeading h2,
+.podPostQueue h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.025em;
+}
+
+.podPostPanelHeading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.podPostBrief label,
+.podPostScheduler label,
+.podPostModal label {
+  display: grid;
+  gap: 7px;
+  margin-top: 15px;
+  color: #303a46;
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.podPostBrief input,
+.podPostBrief textarea,
+.podPostScheduler input,
+.podPostModal input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #fbfcfd;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  outline: none;
+}
+
+.podPostBrief textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.podPostBrief input:focus,
+.podPostBrief textarea:focus,
+.podPostScheduler input:focus,
+.podPostModal input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0, 123, 117, 0.12);
+}
+
+.podPostFieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.podPostPrimary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  color: #ffffff;
+  background: var(--teal);
+  border: 0;
+  border-radius: 11px;
+  box-shadow: 0 8px 18px rgba(0, 123, 117, 0.18);
+}
+
+.podPostPrimary:hover,
+.podPostPrimary:focus-visible {
+  background: var(--teal-dark);
+}
+
+.podPostPrimary:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.podPostCaptionCard {
+  padding: 18px;
+  background: #f6f8fa;
+  border: 1px solid #dfe5e8;
+  border-radius: 14px;
+}
+
+.podPostCaptionCard > div {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.podPostCaptionCard strong {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.podPostCaptionCard button {
+  padding: 6px 9px;
+  color: var(--teal-dark);
+  background: #ffffff;
+  border: 1px solid #bdd4d2;
+  border-radius: 8px;
+}
+
+.podPostCaptionCard p {
+  margin: 18px 0 0;
+  color: #303a46;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.podPostArtworkDrop {
+  position: relative;
+  display: grid;
+  min-height: 250px;
+  margin-top: 16px;
+  padding: 24px;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  overflow: hidden;
+  color: var(--teal-dark);
+  background: #f2fbf8;
+  border: 1.5px dashed #7dbdb2;
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.podPostArtworkDrop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.podPostArtworkDrop:has(img)::after {
+  position: absolute;
+  inset: auto 12px 12px;
+  height: 58px;
+  content: '';
+  background: rgba(9, 11, 18, 0.74);
+  border-radius: 10px;
+}
+
+.podPostArtworkDrop:has(img) strong,
+.podPostArtworkDrop:has(img) span {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  color: #ffffff;
+}
+
+.podPostArtworkDrop span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.podPostArtworkDrop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.podPostPlatforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.podPostPlatforms legend {
+  width: 100%;
+  margin-bottom: 2px;
+  color: #303a46;
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.podPostPlatforms label {
+  display: inline-flex;
+  flex: 1 1 130px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 10px;
+  align-items: center;
+  gap: 7px;
+  color: #4a5662;
+  background: #f7f8f9;
+  border: 1px solid #dbe1e4;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.podPostPlatforms label.selected {
+  color: #005d59;
+  background: #e8f8f2;
+  border-color: #8bcebd;
+}
+
+.podPostPlatforms input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  opacity: 0;
+}
+
+.podPostNotice,
+.podPostAuthNotice {
+  min-height: 20px;
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.podPostQueue {
+  margin-top: 20px;
+}
+
+.podPostQueue > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.podPostQueue > div > span {
+  color: var(--teal-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.podPostQueue > article {
+  display: grid;
+  grid-template-columns: auto minmax(200px, 1.2fr) minmax(200px, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 15px;
+  background: #f8fafb;
+  border: 1px solid #e0e6e8;
+  border-radius: 12px;
+}
+
+.podPostQueue article div {
+  display: grid;
+  gap: 3px;
+}
+
+.podPostQueue article div span,
+.podPostQueue article > span,
+.podPostQueue small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.podPostQueue small {
+  padding: 7px 9px;
+  color: #805a00;
+  background: #fff5cf;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.podPostModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgba(11, 23, 31, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.podPostModal {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid #d8e0e2;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(5, 16, 23, 0.26);
+}
+
+.podPostModal > svg {
+  color: var(--teal);
+}
+
+.podPostModal h2 {
+  margin: 16px 0 8px;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.podPostModal p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.podPostModalClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  color: #4a5662;
+  background: #ffffff;
+  border: 1px solid #d5dcdf;
+  border-radius: 50%;
+  font-size: 1.5rem;
+}
+
+.podPostTextButton {
+  width: 100%;
+  margin-top: 13px;
+  color: var(--teal-dark);
+  background: transparent;
+  border: 0;
+}
+
+.podPostSpinner {
+  animation: podVerterSpin 900ms linear infinite;
+}
+
+@media (max-width: 1050px) {
+  .podPostIntro {
+    grid-template-columns: 170px minmax(0, 1fr);
+  }
+
+  .podPostCloudButton {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+
+  .podPostWorkspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .podPostScheduler {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .podPostShell {
+    width: min(100% - 28px, 1380px);
+    margin: 24px auto 50px;
+  }
+
+  .podPostIntro,
+  .podPostWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .podPostIntro {
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .podPostIntro img {
+    width: min(210px, 70%);
+  }
+
+  .podPostCloudButton,
+  .podPostScheduler {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .podPostBrief,
+  .podPostOutput,
+  .podPostScheduler,
+  .podPostQueue,
+  .podPostModal {
+    padding: 20px;
+  }
+
+  .podPostFieldRow,
+  .podPostQueue > article {
+    grid-template-columns: 1fr;
+  }
+
+  .podPostQueue > article > svg {
+    color: var(--teal);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podPostSpinner {
+    animation: none;
+  }
+}
