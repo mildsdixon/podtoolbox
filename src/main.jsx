@@ -40,6 +40,7 @@ import { analyzeTranscript } from './clipAnalyzer.js';
 import { addContact, createCampaign, sendCampaign, unsubscribeContact } from './piContact.js';
 import { createPodReel, samplePodReels, validateReelDuration } from './podReels.js';
 import { availablePodVerterFormats, formatPodVerterBytes } from './podVerter.js';
+import PodPostTool from './PodPostTool.jsx';
 import {
   SOCIAL_PLATFORMS,
   createScheduledPost,
@@ -184,8 +185,8 @@ function Logo({ compact = false }) {
   );
 }
 
-function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiContact, openPodReels, openPodVerter }) {
-  const toolsActive = ['clipz', 'reels', 'contacts', 'podverter'].includes(view);
+function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiContact, openPodReels, openPodVerter, openPodPost }) {
+  const toolsActive = ['clipz', 'reels', 'contacts', 'podverter', 'podpost'].includes(view);
 
   function closeToolsMenu(event) {
     event.currentTarget.closest('details')?.removeAttribute('open');
@@ -204,6 +205,7 @@ function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiCo
             <ChevronDown size={16} className="toolsChevron" />
           </summary>
           <div className="toolsMenuPanel">
+            <button className={view === 'podpost' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodPost(); }}>PodPost</button>
             <button className={view === 'clipz' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodClipz(); }}>PodClipz</button>
             <button className={view === 'podverter' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodVerter(); }}>PODVerter</button>
             <button className={view === 'reels' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodReels(); }}>RodReelz</button>
@@ -613,7 +615,7 @@ function Pricing({ selectedPlan, setSelectedPlan }) {
   );
 }
 
-function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, openAdmin }) {
+function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, openPodPost, openAdmin }) {
   const [selectedPlan, setSelectedPlan] = useState('Studio');
 
   return (
@@ -630,13 +632,14 @@ function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, open
             <div><Users size={30} /><strong>Member database</strong><span>Track and engage your members.</span></div>
             <div><Mic size={30} /><strong>Episode tools</strong><span>Plan, produce, and publish with ease.</span></div>
             <div><Sparkles size={30} /><strong>PodClipz</strong><span>Find the moments worth posting.</span></div>
+            <div><Send size={30} /><strong>PodPost</strong><span>Create and schedule social campaigns.</span></div>
             <div><Film size={30} /><strong>RodReelz</strong><span>Plan 15-30 second shorts.</span></div>
             <div><Mail size={30} /><strong>Podtacts</strong><span>Email opt-in contacts.</span></div>
             <div><Play size={30} /><strong>Podcast Game</strong><span>Roll topics and play online.</span></div>
             <div><BadgeDollarSign size={30} /><strong>Monetization</strong><span>Manage plans, payments, and access.</span></div>
           </div>
           <div className="heroActions">
-            <button className="startButton" type="button" onClick={openPodReels}><Film size={21} /> Open RodReelz</button>
+            <button className="startButton" type="button" onClick={openPodPost}><Send size={21} /> Open PodPost</button>
             <button className="secondaryButton" type="button" onClick={openPiContact}><Mail size={21} /> Podtacts</button>
           </div>
           <p className="trust"><ShieldCheck size={16} /> Secure. Built for creators. Trusted by podcasters.</p>
@@ -2514,6 +2517,7 @@ function viewFromHash() {
   if (hash === '#picontact' || hash === '#contacts') return 'contacts';
   if (hash === '#game') return 'game';
   if (hash === '#podverter' || hash === '#converter') return 'podverter';
+  if (hash === '#podpost' || hash === '#social') return 'podpost';
 
   return 'site';
 }
@@ -2574,14 +2578,19 @@ function App() {
     openView('podverter', '#podverter');
   }
 
+  function openPodPost() {
+    openView('podpost', '#podpost');
+  }
+
   return (
     <main id="top">
-      <Header view={view} openWebsite={openWebsite} openAdmin={openAdmin} openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodVerter={openPodVerter} />
+      <Header view={view} openWebsite={openWebsite} openAdmin={openAdmin} openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodVerter={openPodVerter} openPodPost={openPodPost} />
       {view === 'admin' && <AdminBackend initialTab={adminTab} onExit={() => openView('site', '#top')} />}
       {view === 'contacts' && <PiContactTool standalone />}
       {view === 'reels' && <PodReelsTool standalone />}
       {view === 'game' && <PodcastGameView />}
       {view === 'podverter' && <PodVerterTool />}
+      {view === 'podpost' && <PodPostTool />}
       {view === 'clipz' && (
         <PodClipzWorkbench
           transcript={publicClipTranscript}
@@ -2590,7 +2599,7 @@ function App() {
           setResult={setPublicClipResult}
         />
       )}
-      {view === 'site' && <WebsiteView openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openAdmin={openAdmin} />}
+      {view === 'site' && <WebsiteView openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodPost={openPodPost} openAdmin={openAdmin} />}
     </main>
   );
 }
