@@ -656,9 +656,10 @@ function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, open
   );
 }
 
-function AdminLogin({ session, message, setMessage, enableLocalDemo }) {
+function AdminLogin({ session, message, setMessage, enableLocalDemo, isPasswordRecovery, onPasswordUpdated }) {
   const [email, setEmail] = useState('mdixon@okanemedia.net');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function signIn(event) {
@@ -713,6 +714,75 @@ function AdminLogin({ session, message, setMessage, enableLocalDemo }) {
     setMessage(error ? error.message : `Confirmation email resent to ${email}. Check inbox, spam, promotions, and updates folders.`);
   }
 
+  async function requestPasswordReset() {
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setMessage('Enter a valid admin email before requesting a password reset.');
+      return;
+    }
+    if (!hasSupabaseConfig) {
+      setMessage('Add Supabase env vars before requesting a password reset.');
+      return;
+    }
+    setBusy(true);
+    const redirectTo = `${window.location.origin}/?password-reset=1`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    setBusy(false);
+    setMessage(error ? error.message : `Password reset email sent to ${email}. Open that secure link to choose a new password.`);
+  }
+
+  async function updatePassword(event) {
+    event.preventDefault();
+    if (password.length < 8) {
+      setMessage('Use a new password with at least 8 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setMessage('The two new-password entries do not match.');
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setPassword('');
+    setConfirmPassword('');
+    setMessage('Password updated. You are signed in to the PodToolbox admin.');
+    onPasswordUpdated?.();
+  }
+
+  if (isPasswordRecovery) {
+    return (
+      <section className="adminLogin">
+        <div>
+          <h1>Choose a new admin password</h1>
+          <p>This secure recovery session is for {email}. Enter the new password twice to finish the reset.</p>
+        </div>
+        <form className="adminAuthCard" onSubmit={updatePassword}>
+          {message && <div className="adminNotice loginNotice">{message}</div>}
+          <label>
+            <span>New password</span>
+            <span className="inputWrap">
+              <Lock size={18} />
+              <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required minLength={8} autoComplete="new-password" />
+            </span>
+          </label>
+          <label>
+            <span>Confirm new password</span>
+            <span className="inputWrap">
+              <Lock size={18} />
+              <input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} type="password" required minLength={8} autoComplete="new-password" />
+            </span>
+          </label>
+          <p className="authHint">Use at least 8 characters and avoid reusing an old password.</p>
+          <button className="primaryWide" type="submit" disabled={busy}>{busy ? 'Updating...' : 'Update password'}</button>
+        </form>
+      </section>
+    );
+  }
+
   if (session) return null;
 
   return (
@@ -739,6 +809,7 @@ function AdminLogin({ session, message, setMessage, enableLocalDemo }) {
         </label>
         <p className="authHint">Use at least 6 characters. If you just created the account, confirm the email before signing in.</p>
         <button className="primaryWide" type="submit" disabled={busy}>{busy ? 'Working...' : 'Sign in'}</button>
+        <button className="secondaryWide" type="button" onClick={requestPasswordReset} disabled={busy}>Forgot password?</button>
         <button className="secondaryWide" type="button" onClick={signUp} disabled={busy}>Create admin account</button>
         <button className="secondaryWide" type="button" onClick={resendConfirmation} disabled={busy}>Resend confirmation email</button>
         <button className="secondaryWide" type="button" onClick={enableLocalDemo} disabled={busy}>Open local demo admin</button>
@@ -1731,6 +1802,11 @@ function PiContactTool({ standalone = false }) {
 
 function AdminBackend({ initialTab = 'members', onExit }) {
   const [session, setSession] = useState(null);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() => {
+    const query = new URLSearchParams(window.location.search);
+    const authHash = new URLSearchParams(window.location.hash.slice(1));
+    return query.get('password-reset') === '1' || authHash.get('type') === 'recovery';
+  });
   const [members, setMembers] = useState(fallbackMembers);
   const [episodes, setEpisodes] = useState(fallbackEpisodes);
   const [payments, setPayments] = useState(fallbackPayments);
@@ -1776,7 +1852,8 @@ function AdminBackend({ initialTab = 'members', onExit }) {
       setSession(data.session);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
       setSession(nextSession);
     });
 
@@ -1974,6 +2051,11 @@ function AdminBackend({ initialTab = 'members', onExit }) {
     setMessage('Local demo admin is open. This lets you review the screens while Supabase email confirmation is pending.');
   }
 
+  function finishPasswordRecovery() {
+    setIsPasswordRecovery(false);
+    window.history.replaceState(null, '', '#admin');
+  }
+
   function beginEditMember(member) {
     setEditingMemberId(member.id);
     setMemberForm({
@@ -2008,10 +2090,12 @@ function AdminBackend({ initialTab = 'members', onExit }) {
           message={message}
           setMessage={setMessage}
           enableLocalDemo={enableLocalDemo}
+          isPasswordRecovery={isPasswordRecovery}
+          onPasswordUpdated={finishPasswordRecovery}
         />
       )}
 
-      {(session || !hasSupabaseConfig || localDemoAdmin) && (
+      {!isPasswordRecovery && (session || !hasSupabaseConfig || localDemoAdmin) && (
         <>
           {pendingDelete && (
             <div className="adminDeleteConfirm" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
@@ -2510,7 +2594,9 @@ function PodVerterTool() {
 
 function viewFromHash() {
   const hash = window.location.hash.toLowerCase();
+  const query = new URLSearchParams(window.location.search);
 
+  if (query.get('password-reset') === '1') return 'admin';
   if (hash === '#admin') return 'admin';
   if (hash === '#podclipz' || hash === '#clipz') return 'clipz';
   if (hash === '#podreels' || hash === '#reels') return 'reels';
