@@ -460,7 +460,7 @@ createServer(async (request, response) => {
 
   const url = new URL(request.url, `http://127.0.0.1:${PORT}`);
 
-  if (request.method === 'GET' && url.pathname === '/health') {
+  if (request.method === 'GET' && ['/health', '/api/health'].includes(url.pathname)) {
     sendJson(response, 200, {
       ok: true,
       service: 'pod-toolbox-media',
