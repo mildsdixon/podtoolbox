@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowRight,
+  AlertTriangle,
   BadgeDollarSign,
   CalendarClock,
   Check,
@@ -2516,7 +2517,10 @@ function PodVerterTool() {
       setNotice(`${payload.fileName} is ready to download.`);
       setNoticeType('success');
     } catch (error) {
-      setNotice(error.message || 'PODVerter could not convert this Facebook URL. Public Facebook videos work best; private videos may require a downloaded file upload instead.');
+      const message = error.message === 'Failed to fetch'
+        ? 'PODVerter could not reach the media service. On local, run npm run media. On live, refresh and try again.'
+        : error.message || 'PODVerter could not convert this Facebook URL. Public Facebook videos work best; private videos may require a downloaded file upload instead.';
+      setNotice(message);
       setNoticeType('error');
     } finally {
       setUrlBusy(false);
@@ -2649,6 +2653,20 @@ function PodVerterTool() {
               <button className="downloadClipLink" type="button" onClick={downloadConversion} disabled={downloadBusy}>
                 <Download size={19} /> {downloadBusy ? 'Preparing...' : `Download ${conversion.format.toUpperCase()}`}
               </button>
+            </>
+          ) : busy || urlBusy ? (
+            <>
+              <div className="podVerterResultIcon working"><RefreshCw className="podVerterSpinner" size={34} /></div>
+              <span>Conversion running</span>
+              <h2>Working on it...</h2>
+              <p>Keep this page open. Facebook URL conversions can take a minute before the file appears.</p>
+            </>
+          ) : noticeType === 'error' ? (
+            <>
+              <div className="podVerterResultIcon error"><AlertTriangle size={34} /></div>
+              <span>Conversion failed</span>
+              <h2>No file created yet.</h2>
+              <p>{notice}</p>
             </>
           ) : (
             <>

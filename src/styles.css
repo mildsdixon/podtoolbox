@@ -3146,6 +3146,16 @@ td:first-child {
   color: var(--teal);
 }
 
+.podVerterResultIcon.working {
+  background: #fff5df;
+  color: #b56b00;
+}
+
+.podVerterResultIcon.error {
+  background: #ffe7e1;
+  color: #b7351d;
+}
+
 .podVerterResult > span {
   color: var(--teal-dark);
   font-size: 0.75rem;
