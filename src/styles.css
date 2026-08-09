@@ -2376,6 +2376,12 @@ td:first-child {
   cursor: pointer;
 }
 
+.downloadClipLink.secondary {
+  border-color: #cadbdc;
+  background: #ffffff;
+  color: #34464a;
+}
+
 .downloadClipLink:disabled {
   border-color: #c6d1d2;
   background: #eef3f3;
@@ -3174,6 +3180,13 @@ td:first-child {
   margin: 0 0 8px;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.podVerterDownloadActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
 
 .podVerterFormats {

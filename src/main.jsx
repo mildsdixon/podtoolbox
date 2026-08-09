@@ -2414,7 +2414,6 @@ function PodVerterTool() {
   const [facebookOutputFormat, setFacebookOutputFormat] = useState('mp4');
   const [busy, setBusy] = useState(false);
   const [urlBusy, setUrlBusy] = useState(false);
-  const [downloadBusy, setDownloadBusy] = useState(false);
   const [notice, setNotice] = useState('Choose a file and output format to begin.');
   const [noticeType, setNoticeType] = useState('info');
   const [conversion, setConversion] = useState(null);
@@ -2527,41 +2526,6 @@ function PodVerterTool() {
     }
   }
 
-  async function downloadConversion() {
-    if (!conversion?.downloadUrl) return;
-
-    setDownloadBusy(true);
-    setNotice(`Preparing ${conversion.fileName} for download...`);
-    setNoticeType('info');
-
-    try {
-      const response = await fetch(conversion.downloadUrl);
-      const contentType = response.headers.get('content-type') || '';
-
-      if (!response.ok || contentType.includes('application/json')) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || 'The converted file is no longer available. Convert it again, then download right away.');
-      }
-
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = conversion.fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
-      setNotice(`${conversion.fileName} downloaded.`);
-      setNoticeType('success');
-    } catch (error) {
-      setNotice(error.message || 'PODVerter could not download the converted file. Convert it again and retry.');
-      setNoticeType('error');
-    } finally {
-      setDownloadBusy(false);
-    }
-  }
-
   return (
     <section className="podVerterShell" aria-labelledby="podverter-title">
       <div className="podVerterIntro">
@@ -2650,9 +2614,14 @@ function PodVerterTool() {
               <span>Conversion complete</span>
               <h2>{conversion.fileName}</h2>
               <p>{conversion.formatLabel} · {formatPodVerterBytes(conversion.sizeBytes)}</p>
-              <button className="downloadClipLink" type="button" onClick={downloadConversion} disabled={downloadBusy}>
-                <Download size={19} /> {downloadBusy ? 'Preparing...' : `Download ${conversion.format.toUpperCase()}`}
-              </button>
+              <div className="podVerterDownloadActions">
+                <a className="downloadClipLink" href={conversion.downloadUrl} download={conversion.fileName}>
+                  <Download size={19} /> Download {conversion.format.toUpperCase()}
+                </a>
+                <a className="downloadClipLink secondary" href={conversion.downloadUrl} target="_blank" rel="noreferrer">
+                  Open file
+                </a>
+              </div>
             </>
           ) : busy || urlBusy ? (
             <>
