@@ -245,7 +245,7 @@ async function downloadFacebookVideo(url, workDir) {
     noWarnings: true,
     restrictFilenames: true,
     continue: false,
-    nopart: true,
+    noPart: true,
     retries: 10,
     fragmentRetries: 10,
     fileAccessRetries: 5,
