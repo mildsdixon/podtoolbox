@@ -251,7 +251,6 @@ async function downloadFacebookVideo(url, workDir) {
     fileAccessRetries: 5,
     extractorRetries: 3,
     socketTimeout: 30,
-    concurrentFragmentDownloads: 1,
     ffmpegLocation: dirname(ffmpegPath),
   }, {
     env: { ...process.env, PATH: pathWithModernPython },
