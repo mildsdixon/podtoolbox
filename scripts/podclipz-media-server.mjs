@@ -70,6 +70,29 @@ function validateFacebookVideoUrl(value) {
   }
 }
 
+function readableFacebookDownloadError(error) {
+  const rawMessage = error instanceof Error ? error.message.trim() : '';
+
+  if (!rawMessage) {
+    return 'PODVerter could not download this Facebook video.';
+  }
+
+  if (/no such option/i.test(rawMessage)) {
+    return 'PODVerter media downloader rejected an internal option. Refresh and try again.';
+  }
+
+  if (/cannot parse data|unable to extract|unsupported url|private|login|cookies|sign in/i.test(rawMessage)) {
+    return 'PODVerter could not read this Facebook video URL.';
+  }
+
+  return rawMessage
+    .split('\n')
+    .filter((line) => !line.toLowerCase().includes('deprecated feature'))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim() || 'PODVerter could not download this Facebook video.';
+}
+
 function parseJsonBody(request) {
   return new Promise((resolvePromise, reject) => {
     let body = '';
@@ -308,9 +331,7 @@ async function handleUrlConversion(request, response) {
       downloadUrl: publicUrl(request, `/conversions/${encodeURIComponent(fileName)}`),
     });
   } catch (error) {
-    const message = error instanceof Error && error.message.trim()
-      ? error.message.trim()
-      : 'PODVerter could not download this Facebook video.';
+    const message = readableFacebookDownloadError(error);
     sendJson(response, 500, {
       error: `${message} Public Facebook videos work best. Private videos or videos that require login may fail.`,
     });
