@@ -74,7 +74,7 @@ function readableFacebookDownloadError(error) {
   const rawMessage = error instanceof Error ? error.message.trim() : '';
 
   if (!rawMessage) {
-    return 'PODVerter could not download this Facebook video.';
+    return 'PODVerter could not download this Facebook video. Save the video first, then use Convert a file.';
   }
 
   if (/no such option/i.test(rawMessage)) {
@@ -82,7 +82,7 @@ function readableFacebookDownloadError(error) {
   }
 
   if (/cannot parse data|unable to extract|unsupported url|private|login|cookies|sign in/i.test(rawMessage)) {
-    return 'PODVerter could not read this Facebook video URL.';
+    return 'Facebook blocked PODVerter from reading this link. Download the video from Facebook first, then use Convert a file.';
   }
 
   return rawMessage
@@ -90,7 +90,7 @@ function readableFacebookDownloadError(error) {
     .filter((line) => !line.toLowerCase().includes('deprecated feature'))
     .join(' ')
     .replace(/\s+/g, ' ')
-    .trim() || 'PODVerter could not download this Facebook video.';
+    .trim() || 'PODVerter could not download this Facebook video. Save the video first, then use Convert a file.';
 }
 
 function parseJsonBody(request) {
@@ -333,7 +333,7 @@ async function handleUrlConversion(request, response) {
   } catch (error) {
     const message = readableFacebookDownloadError(error);
     sendJson(response, 500, {
-      error: `${message} Public Facebook videos work best. Private videos or videos that require login may fail.`,
+      error: `${message} Public Facebook videos sometimes work, but private videos, Reels, and login-required links need the upload path.`,
     });
   } finally {
     if (workDir) await rm(workDir, { recursive: true, force: true });

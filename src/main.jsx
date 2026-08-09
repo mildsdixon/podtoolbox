@@ -2573,7 +2573,7 @@ function PodVerterTool() {
               {urlBusy ? 'Converting URL...' : 'Convert Facebook URL'}
             </button>
 
-            <p className="podVerterLegalNote">Use only videos you own, have permission to download, or that are legally available to download.</p>
+            <p className="podVerterLegalNote">Use only videos you own or have permission to download. If Facebook blocks the URL, save the video first and use Convert a file below.</p>
           </form>
 
           <form className="podVerterPanel" onSubmit={convertFile}>
