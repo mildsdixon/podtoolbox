@@ -244,7 +244,7 @@ async function downloadFacebookVideo(url, workDir) {
     noPlaylist: true,
     noWarnings: true,
     restrictFilenames: true,
-    continuedl: false,
+    continue: false,
     nopart: true,
     retries: 10,
     fragmentRetries: 10,
@@ -309,7 +309,9 @@ async function handleUrlConversion(request, response) {
       downloadUrl: publicUrl(request, `/conversions/${encodeURIComponent(fileName)}`),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PODVerter could not convert this Facebook URL.';
+    const message = error instanceof Error && error.message.trim()
+      ? error.message.trim()
+      : 'PODVerter could not download this Facebook video.';
     sendJson(response, 500, {
       error: `${message} Public Facebook videos work best. Private videos or videos that require login may fail.`,
     });
