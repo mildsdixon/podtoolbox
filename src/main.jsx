@@ -2409,12 +2409,16 @@ function PodClipzWorkbench({ transcript, setTranscript, result, setResult }) {
 function PodVerterTool() {
   const [sourceFile, setSourceFile] = useState(null);
   const [outputFormat, setOutputFormat] = useState('mp3');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [facebookOutputFormat, setFacebookOutputFormat] = useState('mp4');
   const [busy, setBusy] = useState(false);
+  const [urlBusy, setUrlBusy] = useState(false);
   const [downloadBusy, setDownloadBusy] = useState(false);
   const [notice, setNotice] = useState('Choose a file and output format to begin.');
   const [noticeType, setNoticeType] = useState('info');
   const [conversion, setConversion] = useState(null);
   const outputFormats = availablePodVerterFormats(sourceFile?.type);
+  const facebookFormats = ['mp4', 'mov'];
 
   function chooseFile(event) {
     const file = event.target.files?.[0] || null;
@@ -2482,6 +2486,43 @@ function PodVerterTool() {
     }
   }
 
+  async function convertFacebookUrl(event) {
+    event.preventDefault();
+
+    if (!facebookUrl.trim()) {
+      setNotice('Paste a public Facebook video URL first.');
+      setNoticeType('error');
+      return;
+    }
+
+    setUrlBusy(true);
+    setConversion(null);
+    setNotice(`Converting Facebook video to ${facebookOutputFormat.toUpperCase()}...`);
+    setNoticeType('info');
+
+    try {
+      const response = await fetch(mediaApiUrl('/api/podverter/url'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: facebookUrl, format: facebookOutputFormat }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload.downloadUrl) {
+        throw new Error(payload.error || 'PODVerter could not convert this Facebook URL.');
+      }
+
+      setConversion(payload);
+      setNotice(`${payload.fileName} is ready to download.`);
+      setNoticeType('success');
+    } catch (error) {
+      setNotice(error.message || 'PODVerter could not convert this Facebook URL. Public Facebook videos work best; private videos may require a downloaded file upload instead.');
+      setNoticeType('error');
+    } finally {
+      setUrlBusy(false);
+    }
+  }
+
   async function downloadConversion() {
     if (!conversion?.downloadUrl) return;
 
@@ -2532,35 +2573,71 @@ function PodVerterTool() {
       </div>
 
       <div className="podVerterWorkspace">
-        <form className="podVerterPanel" onSubmit={convertFile}>
-          <div className="podVerterPanelHeader">
-            <h2>Convert a file</h2>
-            <p>Audio up to 1 GB · Video up to 1 GB</p>
-          </div>
+        <div className="podVerterInputStack">
+          <form className="podVerterPanel podVerterUrlPanel" onSubmit={convertFacebookUrl}>
+            <div className="podVerterPanelHeader">
+              <h2>Facebook URL to video</h2>
+              <p>Public Facebook videos · MP4 or MOV</p>
+            </div>
 
-          <label className="podVerterDropzone">
-            <Upload size={28} />
-            <strong>{sourceFile ? sourceFile.name : 'Choose audio or video'}</strong>
-            <span>{sourceFile ? `${sourceFile.type || 'Media file'} · ${formatPodVerterBytes(sourceFile.size)}` : 'MP3, WAV, M4A, MP4, MOV, or WebM'}</span>
-            <input accept="audio/*,video/*" onChange={chooseFile} type="file" />
-          </label>
+            <label className="podVerterField">
+              <span>Facebook video URL</span>
+              <input
+                inputMode="url"
+                onChange={(event) => setFacebookUrl(event.target.value)}
+                placeholder="https://www.facebook.com/.../videos/..."
+                type="url"
+                value={facebookUrl}
+              />
+            </label>
 
-          <label className="podVerterField">
-            <span>Convert to</span>
-            <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value)}>
-              {outputFormats.map((format) => (
-                <option key={format.value} value={format.value}>{format.label}</option>
-              ))}
-            </select>
-          </label>
+            <label className="podVerterField">
+              <span>Convert to</span>
+              <select value={facebookOutputFormat} onChange={(event) => setFacebookOutputFormat(event.target.value)}>
+                {facebookFormats.map((format) => (
+                  <option key={format} value={format}>{format.toUpperCase()} video</option>
+                ))}
+              </select>
+            </label>
 
-          <button className="podVerterConvertButton" disabled={!sourceFile || busy} type="submit">
-            <RefreshCw className={busy ? 'podVerterSpinner' : ''} size={20} />
-            {busy ? 'Converting...' : 'Convert file'}
-          </button>
+            <button className="podVerterConvertButton" disabled={!facebookUrl.trim() || urlBusy} type="submit">
+              <RefreshCw className={urlBusy ? 'podVerterSpinner' : ''} size={20} />
+              {urlBusy ? 'Converting URL...' : 'Convert Facebook URL'}
+            </button>
+
+            <p className="podVerterLegalNote">Use only videos you own, have permission to download, or that are legally available to download.</p>
+          </form>
+
+          <form className="podVerterPanel" onSubmit={convertFile}>
+            <div className="podVerterPanelHeader">
+              <h2>Convert a file</h2>
+              <p>Audio up to 1 GB · Video up to 1 GB</p>
+            </div>
+
+            <label className="podVerterDropzone">
+              <Upload size={28} />
+              <strong>{sourceFile ? sourceFile.name : 'Choose audio or video'}</strong>
+              <span>{sourceFile ? `${sourceFile.type || 'Media file'} · ${formatPodVerterBytes(sourceFile.size)}` : 'MP3, WAV, M4A, MP4, MOV, or WebM'}</span>
+              <input accept="audio/*,video/*" onChange={chooseFile} type="file" />
+            </label>
+
+            <label className="podVerterField">
+              <span>Convert to</span>
+              <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value)}>
+                {outputFormats.map((format) => (
+                  <option key={format.value} value={format.value}>{format.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <button className="podVerterConvertButton" disabled={!sourceFile || busy} type="submit">
+              <RefreshCw className={busy ? 'podVerterSpinner' : ''} size={20} />
+              {busy ? 'Converting...' : 'Convert file'}
+            </button>
+          </form>
 
           <p className={`podVerterNotice ${noticeType}`} aria-live="polite">{notice}</p>
-        </form>
+        </div>
 
         <aside className="podVerterResult" aria-label="PODVerter output">
           {conversion ? (
@@ -2586,7 +2663,8 @@ function PodVerterTool() {
 
       <div className="podVerterFormats" aria-label="Supported PODVerter formats">
         <strong>Audio outputs</strong><span>MP3</span><span>WAV</span><span>M4A</span>
-        <strong>Video outputs</strong><span>MP4</span><span>WebM</span>
+        <strong>Video outputs</strong><span>MP4</span><span>MOV</span><span>WebM</span>
+        <strong>URL input</strong><span>Facebook</span>
       </div>
     </section>
   );

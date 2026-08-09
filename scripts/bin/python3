@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if command -v python3.12 >/dev/null 2>&1; then
+  exec python3.12 "$@"
+fi
+
+if command -v python3.11 >/dev/null 2>&1; then
+  exec python3.11 "$@"
+fi
+
+if command -v python3.10 >/dev/null 2>&1; then
+  exec python3.10 "$@"
+fi
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PATH_WITHOUT_SELF=$(printf '%s' "$PATH" | awk -v RS=: -v ORS=: -v self="$SELF_DIR" '$0 != self { print }' | sed 's/:$//')
+PATH="$PATH_WITHOUT_SELF" exec python3 "$@"

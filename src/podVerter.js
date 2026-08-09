@@ -28,6 +28,13 @@ export const PODVERTER_FORMATS = Object.freeze([
     ffmpegArgs: ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart'],
   },
   {
+    value: 'mov',
+    label: 'MOV video',
+    kind: 'video',
+    mimeType: 'video/quicktime',
+    ffmpegArgs: ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart'],
+  },
+  {
     value: 'webm',
     label: 'WebM video',
     kind: 'video',

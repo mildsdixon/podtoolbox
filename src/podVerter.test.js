@@ -8,14 +8,15 @@ import {
 } from './podVerter.js';
 
 test('PODVerter exposes audio and video conversion definitions', () => {
-  assert.deepEqual(PODVERTER_FORMATS.map((format) => format.value), ['mp3', 'wav', 'm4a', 'mp4', 'webm']);
+  assert.deepEqual(PODVERTER_FORMATS.map((format) => format.value), ['mp3', 'wav', 'm4a', 'mp4', 'mov', 'webm']);
   assert.equal(getPodVerterFormat('MP3')?.mimeType, 'audio/mpeg');
+  assert.equal(getPodVerterFormat('MOV')?.mimeType, 'video/quicktime');
   assert.equal(getPodVerterFormat('unknown'), null);
 });
 
 test('PODVerter limits audio inputs to audio output formats', () => {
   assert.deepEqual(availablePodVerterFormats('audio/wav').map((format) => format.value), ['mp3', 'wav', 'm4a']);
-  assert.deepEqual(availablePodVerterFormats('video/mp4').map((format) => format.value), ['mp3', 'wav', 'm4a', 'mp4', 'webm']);
+  assert.deepEqual(availablePodVerterFormats('video/mp4').map((format) => format.value), ['mp3', 'wav', 'm4a', 'mp4', 'mov', 'webm']);
 });
 
 test('PODVerter formats output sizes for the result card', () => {

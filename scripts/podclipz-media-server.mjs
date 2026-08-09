@@ -1,11 +1,12 @@
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, rm, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { extname, join, resolve } from 'node:path';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { spawn } from 'node:child_process';
 import Busboy from 'busboy';
 import ffmpegPath from 'ffmpeg-static';
+import youtubeDl from 'youtube-dl-exec';
 import { PODVERTER_FORMATS, getPodVerterFormat } from '../src/podVerter.js';
 
 const PORT = Number(process.env.PORT || process.env.PODCLIPZ_MEDIA_PORT || 8788);
@@ -14,9 +15,18 @@ const ROOT_DIR = resolve(process.cwd(), '.podclipz-media');
 const UPLOAD_DIR = join(ROOT_DIR, 'uploads');
 const EXPORT_DIR = join(ROOT_DIR, 'exports');
 const CONVERSION_DIR = join(ROOT_DIR, 'conversions');
+const URL_DOWNLOAD_DIR = join(ROOT_DIR, 'url-downloads');
 const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
+const MAX_JSON_BYTES = 32 * 1024;
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.webm']);
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.m4v', '.webm', '.mkv']);
+const YTDLP_PYTHON_BIN_DIR = process.env.PODTOOLBOX_PYTHON_BIN_DIR || join(resolve(process.cwd()), 'scripts/bin');
+const SOCIAL_VIDEO_HOSTS = new Set([
+  'facebook.com',
+  'www.facebook.com',
+  'm.facebook.com',
+  'fb.watch',
+]);
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -40,6 +50,48 @@ function cleanFileName(value) {
     .replace(/[^a-z0-9_-]+/gi, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60) || 'podclipz-video';
+}
+
+function validateFacebookVideoUrl(value) {
+  const rawUrl = String(value || '').trim();
+  const normalizedUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+
+  try {
+    const parsed = new URL(normalizedUrl);
+    const host = parsed.hostname.toLowerCase();
+
+    if (!['http:', 'https:'].includes(parsed.protocol) || !SOCIAL_VIDEO_HOSTS.has(host)) {
+      throw new Error('Paste a public Facebook video URL, such as facebook.com/.../videos/... or fb.watch/...');
+    }
+
+    return parsed.toString();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Paste a valid Facebook video URL.');
+  }
+}
+
+function parseJsonBody(request) {
+  return new Promise((resolvePromise, reject) => {
+    let body = '';
+
+    request.on('data', (chunk) => {
+      body += chunk.toString();
+      if (Buffer.byteLength(body) > MAX_JSON_BYTES) {
+        request.destroy();
+        reject(new Error('Request body is too large.'));
+      }
+    });
+
+    request.on('end', () => {
+      try {
+        resolvePromise(body ? JSON.parse(body) : {});
+      } catch {
+        reject(new Error('Send a valid JSON request.'));
+      }
+    });
+
+    request.on('error', reject);
+  });
 }
 
 function parseTimestamp(value) {
@@ -157,6 +209,112 @@ async function handleConversion(request, response) {
     sendJson(response, 500, { error: error instanceof Error ? error.message : 'PODVerter could not convert this file.' });
   } finally {
     if (uploadPath) await rm(uploadPath, { force: true });
+  }
+}
+
+async function newestMediaFile(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(entries
+    .filter((entry) => entry.isFile() && !entry.name.endsWith('.part') && !entry.name.endsWith('.ytdl'))
+    .map(async (entry) => {
+      const filePath = join(directory, entry.name);
+      const fileInfo = await stat(filePath);
+      return { filePath, fileInfo };
+    }));
+
+  return files
+    .filter((file) => file.fileInfo.size > 0)
+    .sort((left, right) => right.fileInfo.mtimeMs - left.fileInfo.mtimeMs)[0]?.filePath || '';
+}
+
+async function downloadFacebookVideo(url, workDir) {
+  const outputTemplate = join(workDir, '%(title).90s-%(id)s.%(ext)s');
+  const pathWithModernPython = [YTDLP_PYTHON_BIN_DIR, process.env.PATH].filter(Boolean).join(':');
+
+  await youtubeDl(url, {
+    output: outputTemplate,
+    format: [
+      'bv*[vcodec!=none][height<=1080][ext=mp4]+ba[acodec!=none][ext=m4a]',
+      'bv*[vcodec!=none][height<=1080]+ba[acodec!=none]',
+      'b[vcodec!=none][acodec!=none][ext=mp4]',
+      'best[vcodec!=none][acodec!=none]',
+    ].join('/'),
+    formatSort: ['res', 'ext:mp4:m4a'],
+    mergeOutputFormat: 'mp4',
+    noPlaylist: true,
+    noWarnings: true,
+    restrictFilenames: true,
+    continuedl: false,
+    nopart: true,
+    retries: 10,
+    fragmentRetries: 10,
+    fileAccessRetries: 5,
+    extractorRetries: 3,
+    socketTimeout: 30,
+    concurrentFragmentDownloads: 1,
+    ffmpegLocation: dirname(ffmpegPath),
+  }, {
+    env: { ...process.env, PATH: pathWithModernPython },
+    timeout: 1000 * 60 * 8,
+  });
+
+  const downloadedPath = await newestMediaFile(workDir);
+  if (!downloadedPath) {
+    throw new Error('Facebook download finished, but no video file was found.');
+  }
+
+  return downloadedPath;
+}
+
+async function handleUrlConversion(request, response) {
+  let workDir = '';
+
+  try {
+    await mkdir(URL_DOWNLOAD_DIR, { recursive: true });
+    await mkdir(CONVERSION_DIR, { recursive: true });
+
+    const body = await parseJsonBody(request);
+    const url = validateFacebookVideoUrl(body.url);
+    const format = getPodVerterFormat(body.format || 'mp4');
+
+    if (!format || !['mp4', 'mov'].includes(format.value)) {
+      throw new Error('Choose MP4 or MOV as the Facebook video output format.');
+    }
+
+    workDir = join(URL_DOWNLOAD_DIR, `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    await mkdir(workDir, { recursive: true });
+
+    const downloadedPath = await downloadFacebookVideo(url, workDir);
+    const sourceName = cleanFileName(basename(downloadedPath) || 'facebook-video');
+    const fileName = `${Date.now()}-${sourceName}.${format.value}`;
+    const outputPath = join(CONVERSION_DIR, fileName);
+
+    await runFfmpeg([
+      '-hide_banner',
+      '-y',
+      '-i',
+      downloadedPath,
+      ...format.ffmpegArgs,
+      outputPath,
+    ]);
+
+    const converted = await stat(outputPath);
+    sendJson(response, 200, {
+      status: 'ready',
+      sourceName: url,
+      fileName,
+      sizeBytes: converted.size,
+      format: format.value,
+      formatLabel: format.label,
+      downloadUrl: publicUrl(request, `/conversions/${encodeURIComponent(fileName)}`),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'PODVerter could not convert this Facebook URL.';
+    sendJson(response, 500, {
+      error: `${message} Public Facebook videos work best. Private videos or videos that require login may fail.`,
+    });
+  } finally {
+    if (workDir) await rm(workDir, { recursive: true, force: true });
   }
 }
 
@@ -292,6 +450,7 @@ async function serveConversion(request, response) {
 await mkdir(UPLOAD_DIR, { recursive: true });
 await mkdir(EXPORT_DIR, { recursive: true });
 await mkdir(CONVERSION_DIR, { recursive: true });
+await mkdir(URL_DOWNLOAD_DIR, { recursive: true });
 
 createServer(async (request, response) => {
   if (request.method === 'OPTIONS') {
@@ -307,12 +466,21 @@ createServer(async (request, response) => {
       service: 'pod-toolbox-media',
       ffmpeg: Boolean(ffmpegPath),
       podVerterFormats: PODVERTER_FORMATS.map((format) => format.value),
+      urlConversion: {
+        supportedSites: ['Facebook'],
+        supportedFormats: ['mp4', 'mov'],
+      },
     });
     return;
   }
 
   if (request.method === 'POST' && ['/api/podverter/convert', '/podverter/convert'].includes(url.pathname)) {
     await handleConversion(request, response);
+    return;
+  }
+
+  if (request.method === 'POST' && ['/api/podverter/url', '/podverter/url'].includes(url.pathname)) {
+    await handleUrlConversion(request, response);
     return;
   }
 

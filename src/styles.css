@@ -2937,6 +2937,12 @@ td:first-child {
   align-items: stretch;
 }
 
+.podVerterInputStack {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
 .podVerterPanel,
 .podVerterResult {
   border: 1px solid var(--line);
@@ -3035,7 +3041,25 @@ td:first-child {
   outline: 0;
 }
 
-.podVerterField select:focus-visible {
+.podVerterField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid #bdcbd0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17212b;
+  padding: 0 12px;
+  font: inherit;
+  outline: 0;
+}
+
+.podVerterField input::placeholder {
+  color: #7c8a93;
+}
+
+.podVerterField select:focus-visible,
+.podVerterField input:focus-visible {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(0, 123, 117, 0.13);
 }
@@ -3072,6 +3096,16 @@ td:first-child {
   color: #44515b;
   font-size: 0.86rem;
   font-weight: 720;
+  line-height: 1.4;
+}
+
+.podVerterLegalNote {
+  margin: 0;
+  padding: 10px 11px;
+  border-radius: 8px;
+  background: #fff8ee;
+  color: #755022;
+  font-size: 0.82rem;
   line-height: 1.4;
 }
 
