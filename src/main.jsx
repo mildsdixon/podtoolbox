@@ -186,8 +186,8 @@ function Logo({ compact = false }) {
   );
 }
 
-function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiContact, openPodReels, openPodVerter, openPodPost }) {
-  const toolsActive = ['clipz', 'reels', 'contacts', 'podverter', 'podpost'].includes(view);
+function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiContact, openPodReels, openPodVerter, openPodPost, openVideoPodAd }) {
+  const toolsActive = ['clipz', 'reels', 'contacts', 'podverter', 'podpost', 'videopodad'].includes(view);
 
   function closeToolsMenu(event) {
     event.currentTarget.closest('details')?.removeAttribute('open');
@@ -209,6 +209,7 @@ function Header({ view, openWebsite, openAdmin, openPodClipz, openGame, openPiCo
             <button className={view === 'podpost' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodPost(); }}>PodPost</button>
             <button className={view === 'clipz' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodClipz(); }}>PodClipz</button>
             <button className={view === 'podverter' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodVerter(); }}>PODVerter</button>
+            <button className={view === 'videopodad' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openVideoPodAd(); }}>Video PodAd</button>
             <button className={view === 'reels' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPodReels(); }}>RodReelz</button>
             <button className={view === 'contacts' ? 'navActive' : ''} type="button" onClick={(event) => { closeToolsMenu(event); openPiContact(); }}>Podtacts</button>
           </div>
@@ -419,6 +420,82 @@ function PodClipzFeature({ openPodClipz }) {
   );
 }
 
+function VideoPodAdFeature({ openVideoPodAd }) {
+  return (
+    <section className="podAdsFeature" aria-label="Video PodAd commercial placement tool">
+      <div>
+        <span className="sectionEyebrow"><Film size={16} /> Video Pod<span className="podAdRed">Ad</span></span>
+        <h2>Place sponsor video without breaking the show.</h2>
+        <p>Choose the beginning, a timed mid-roll, or the ending of the show. Add a sponsor video, replay a few seconds after the break, and name the finished video your way.</p>
+        <button className="startButton" type="button" onClick={openVideoPodAd}><Film size={20} /> Open Video PodAd</button>
+      </div>
+      <div className="podAdsFeaturePreview" aria-hidden="true"><b>START</b><span>Show</span><b>MID</b><span>Show</span><b>END</b></div>
+    </section>
+  );
+}
+
+function VideoPodAdTool() {
+  const [placement, setPlacement] = useState('pre');
+  const [timecode, setTimecode] = useState('00:18:30');
+  const [showFile, setShowFile] = useState('');
+  const [adFile, setAdFile] = useState('');
+  const [title, setTitle] = useState('My finished episode');
+  const [replay, setReplay] = useState('3');
+
+  const placementInfo = {
+    pre: { label: 'Pre-roll', detail: 'At the beginning of the show', summary: 'Start of show' },
+    mid: { label: 'Mid-roll', detail: 'Choose a time during the show', summary: timecode || 'Choose a time' },
+    post: { label: 'Post-roll', detail: 'At the end of the show', summary: 'End of show' },
+  }[placement];
+
+  return (
+    <section className="videoPodAdShell" aria-label="Video PodAd editor">
+      <div className="videoPodAdHero">
+        <div className="videoPodAdBrand"><span className="videoPodAdMark"><Play size={26} fill="currentColor" /></span><strong>Video Pod<span>Ad</span></strong></div>
+        <div><span className="videoPodAdKicker">Sponsor placement studio</span><h1>Build your sponsor break into the video.</h1><p>Upload the show and sponsor video, choose the placement, then prepare the finished episode.</p></div>
+      </div>
+
+      <div className="videoPodAdGrid">
+        <div className="videoPodAdSteps">
+          <article className="videoPodAdCard">
+            <span className="videoPodAdStep">01</span><div><h2>Upload your show</h2><p>Choose the video episode you want to prepare.</p>
+              <label className="videoPodAdUpload"><Upload size={19} /><span>{showFile || 'Choose show video'}</span><input type="file" accept="video/*" onChange={(event) => setShowFile(event.target.files?.[0]?.name || '')} /></label>
+            </div>
+          </article>
+
+          <article className="videoPodAdCard">
+            <span className="videoPodAdStep">02</span><div><h2>Choose the placement</h2><p>Select where the sponsor video belongs.</p>
+              <div className="videoPodAdChoices">
+                {['pre', 'mid', 'post'].map((option) => <button key={option} type="button" className={placement === option ? 'selected' : ''} onClick={() => setPlacement(option)}><b>{option === 'pre' ? 'Pre-roll' : option === 'mid' ? 'Mid-roll' : 'Post-roll'}</b><span>{option === 'pre' ? 'Beginning' : option === 'mid' ? 'Choose a time' : 'End of show'}</span></button>)}
+              </div>
+            </div>
+          </article>
+
+          <article className="videoPodAdCard">
+            <span className="videoPodAdStep">03</span><div><h2>{placementInfo.label} timing</h2><p>{placementInfo.detail}</p>
+              <input className="videoPodAdInput" aria-label="Placement timing" value={placement === 'mid' ? timecode : placementInfo.summary} disabled={placement !== 'mid'} onChange={(event) => setTimecode(event.target.value)} />
+            </div>
+          </article>
+
+          <article className="videoPodAdCard">
+            <span className="videoPodAdStep">04</span><div><h2>Upload sponsor video</h2><p>Add the video your audience will see at this break.</p>
+              <label className="videoPodAdUpload"><FileVideo size={19} /><span>{adFile || 'Choose sponsor video'}</span><input type="file" accept="video/*" onChange={(event) => setAdFile(event.target.files?.[0]?.name || '')} /></label>
+            </div>
+          </article>
+        </div>
+
+        <aside className="videoPodAdPreview">
+          <div className="videoPodAdPreviewScreen"><span>YOUR VIDEO</span><div className="videoPodAdPlay"><Play size={31} fill="currentColor" /></div><small>{showFile || 'Show preview appears here'}</small></div>
+          <div className="videoPodAdSummary"><span>Placement</span><strong>{placementInfo.label}</strong><p>{placementInfo.summary}</p><span>Replay after ad</span><strong>{replay} seconds</strong><input type="range" min="0" max="10" value={replay} onChange={(event) => setReplay(event.target.value)} /></div>
+          <label className="videoPodAdTitle">Finished video title<input value={title} onChange={(event) => setTitle(event.target.value)} /></label>
+          <button className="videoPodAdExport" type="button" onClick={() => window.alert(`Your video will be named: ${title || 'Untitled video'}`)}><Download size={19} /> Prepare video</button>
+          <p className="videoPodAdNote">Your files stay in this browser until you connect video processing.</p>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
 const gameDecks = {
   blackHistory: {
     label: 'Black History',
@@ -616,7 +693,7 @@ function Pricing({ selectedPlan, setSelectedPlan }) {
   );
 }
 
-function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, openPodPost, openAdmin }) {
+function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, openPodPost, openVideoPodAd, openAdmin }) {
   const [selectedPlan, setSelectedPlan] = useState('Studio');
 
   return (
@@ -636,6 +713,7 @@ function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, open
             <div><Send size={30} /><strong>PodPost</strong><span>Create and schedule social campaigns.</span></div>
             <div><Film size={30} /><strong>RodReelz</strong><span>Plan 15-30 second shorts.</span></div>
             <div><Mail size={30} /><strong>Podtacts</strong><span>Email opt-in contacts.</span></div>
+            <div><Film size={30} /><strong>Video PodAd</strong><span>Place sponsor video into your show.</span></div>
             <div><Play size={30} /><strong>Podcast Game</strong><span>Roll topics and play online.</span></div>
             <div><BadgeDollarSign size={30} /><strong>Monetization</strong><span>Manage plans, payments, and access.</span></div>
           </div>
@@ -648,6 +726,7 @@ function WebsiteView({ openPodClipz, openGame, openPiContact, openPodReels, open
         <AuthPanel selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} />
       </section>
       <DashboardPreview selectedPlan={selectedPlan} openAdmin={openAdmin} />
+      <VideoPodAdFeature openVideoPodAd={openVideoPodAd} />
       <PodReelsTool standalone />
       <PiContactTool standalone />
       <PodcastGameView compact />
@@ -2668,6 +2747,7 @@ function viewFromHash() {
   if (hash === '#picontact' || hash === '#contacts') return 'contacts';
   if (hash === '#game') return 'game';
   if (hash === '#podverter' || hash === '#converter') return 'podverter';
+  if (hash === '#videopodad' || hash === '#video-podad' || hash === '#podads' || hash === '#ads') return 'videopodad';
   if (hash === '#podpost' || hash === '#social') return 'podpost';
 
   return 'site';
@@ -2733,14 +2813,19 @@ function App() {
     openView('podpost', '#podpost');
   }
 
+  function openVideoPodAd() {
+    openView('videopodad', '#videopodad');
+  }
+
   return (
     <main id="top">
-      <Header view={view} openWebsite={openWebsite} openAdmin={openAdmin} openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodVerter={openPodVerter} openPodPost={openPodPost} />
+      <Header view={view} openWebsite={openWebsite} openAdmin={openAdmin} openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodVerter={openPodVerter} openPodPost={openPodPost} openVideoPodAd={openVideoPodAd} />
       {view === 'admin' && <AdminBackend initialTab={adminTab} onExit={() => openView('site', '#top')} />}
       {view === 'contacts' && <PiContactTool standalone />}
       {view === 'reels' && <PodReelsTool standalone />}
       {view === 'game' && <PodcastGameView />}
       {view === 'podverter' && <PodVerterTool />}
+      {view === 'videopodad' && <VideoPodAdTool />}
       {view === 'podpost' && <PodPostTool />}
       {view === 'clipz' && (
         <PodClipzWorkbench
@@ -2750,7 +2835,7 @@ function App() {
           setResult={setPublicClipResult}
         />
       )}
-      {view === 'site' && <WebsiteView openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodPost={openPodPost} openAdmin={openAdmin} />}
+      {view === 'site' && <WebsiteView openPodClipz={openPodClipz} openGame={openGame} openPiContact={openPiContact} openPodReels={openPodReels} openPodPost={openPodPost} openVideoPodAd={openVideoPodAd} openAdmin={openAdmin} />}
     </main>
   );
 }
